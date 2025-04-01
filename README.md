@@ -88,3 +88,5 @@ The resulte will be save as top_100_attribution_data.csv
 ├── run/                               # optimal model parameters dir
 ├── README.md                          # Description document of the project
 ```
+### Our Method
+![Method](imgs/Method.png)

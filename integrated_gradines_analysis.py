@@ -8,40 +8,40 @@ import os
 import matplotlib.pyplot as plt
 from captum.attr import IntegratedGradients
 
-# 检查CUDA是否可用
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using device: {device}')
 
-# 加载数据
+
 df_train = pd.read_csv('data/train_data.csv')
 input_embedding = 512
 
-# 特征名（从第二行开始，第一列是特征名称）
+
 feature_names = df_train.iloc[1:, 0].values
 
-# 数据处理（跳过第一行标签行）
-selected_data = df_train.iloc[1:, 1:-1].astype(float)
-data = selected_data.T  # 样本为行
 
-# 标签处理
-labels = df_train.iloc[0, 1:-1].values  # 第一行是标签
+selected_data = df_train.iloc[1:, 1:-1].astype(float)
+data = selected_data.T  
+
+
+labels = df_train.iloc[0, 1:-1].values 
 label_encoder = LabelEncoder()
 encoded_labels = label_encoder.fit_transform(labels)
 num_classes = len(set(encoded_labels))
-print(f"总共有 {num_classes} 种标签。")
+print(f"Total have {num_classes} labels.")
 
-# 转为tensor
+
 X = torch.tensor(data.values, dtype=torch.float32).to(device)
 y = torch.tensor(encoded_labels, dtype=torch.long).to(device)
 
-# 加载模型
+
 input_dim = X.shape[1]
 model = AgeModel(input_dim, input_embedding, num_classes).to(device)
 model_path = 'run/Age_model.pt'
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 
-# 创建包装器，仅返回output用于IG
+
 class WrappedModel(torch.nn.Module):
     def __init__(self, base_model):
         super().__init__()
@@ -62,15 +62,15 @@ for i in range(len(X)):
     attributions, _ = ig.attribute(sample, target=label, return_convergence_delta=True)
     attr_list.append(attributions.cpu().detach().numpy().flatten())
 
-# numpy 化
+
 attributions = np.array(attr_list)
 feature_importance = np.mean(np.abs(attributions), axis=0)
 
-# 获取Top-K重要特征
+
 num_features = 100
 top_features_idx = np.argsort(feature_importance)[-num_features:]
 
-# 可视化
+
 fig, ax = plt.subplots(figsize=(8, 30))
 y_ticks = [feature_names[idx] for idx in top_features_idx]
 y_positions = range(len(top_features_idx))
@@ -98,7 +98,7 @@ cbar.set_label("Importance Score")
 plt.show()
 print("The plot of the top 100 important features has been displayed.")
 
-# 保存重要特征
+
 output_df = pd.DataFrame({
     'Feature': [feature_names[idx] for idx in top_features_idx],
     'Importance': importance_scores

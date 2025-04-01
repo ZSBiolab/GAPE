@@ -7,44 +7,44 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import confusion_matrix,  f1_score
 import seaborn as sns
 import matplotlib.pyplot as plt
-from age_pre_model import AgeModel  # 从model.py导入模型
-from tqdm import tqdm  # 导入tqdm库
+from age_pre_model import AgeModel 
+from tqdm import tqdm  
 import numpy as np
 import os
 
-# 检查CUDA是否可用，然后使用GPU或回退到CPU
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using device: {device}')
 
-# 加载数据
+
 df = pd.read_csv('data/train_data_demo.csv')
 
 selected_data = df.iloc[1:, 1:]
 
-# 提取标签和数据
-labels = df.iloc[0, 1:]  # 第一行作为标签
-data = selected_data.T  # 转置使每一行成为一个样本
 
-# 编码标签
+labels = df.iloc[0, 1:]  
+data = selected_data.T 
+
+
 label_encoder = LabelEncoder()
 encoded_labels = label_encoder.fit_transform(labels)
 
-# 打印标签数量
-print(f"总共有 {len(set(encoded_labels))} 种标签。")
 
-# 数据转换为PyTorch张量
+print(f"total have {len(set(encoded_labels))} labels.")
+
+
 X = torch.tensor(data.values.astype(float)).float().to(device)
 y = torch.tensor(encoded_labels).long().to(device)
 
-# 创建数据加载器
+
 dataset = TensorDataset(X, y)
 data_loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-num_epochs = 200  # 根据需要调整
+num_epochs = 200  
 input_embedding = 512
 save_epochs = num_epochs-20
 
-# 实例化模型并移动到GPU
+
 model = AgeModel(X.shape[1], input_embedding, len(set(encoded_labels))).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.00001)
@@ -54,10 +54,10 @@ epoch_accuracies = []
 best_accuracy = 0
 best_epoch_labels = []
 best_epoch_predictions = []
-epoch_f1_scores = []  # 新增：存储每个epoch的F1分数
+epoch_f1_scores = []  
 best_epoch = -1
-best_outputs = []  # 用于存储最佳epoch的outputs
-best_labels = []  # 用于存储最佳epoch的真实标签
+best_outputs = []  
+best_labels = []  
 best_embedding = []
 best_model_path = 'run/Age_model.pt'
 
@@ -73,8 +73,8 @@ for epoch in tqdm(range(num_epochs), desc='Training Epochs'):
     current_epoch_labels = []
     current_epoch_predictions = []
     model.train()
-    epoch_outputs = []  # 存储当前epoch的所有输出
-    epoch_labels = []  # 存储当前epoch的所有真实标签
+    epoch_outputs = []  
+    epoch_labels = []  
     epoch_embedding = []
     for inputs, labels in data_loader:
         inputs, labels = inputs.to(device), labels.to(device)
@@ -85,7 +85,7 @@ for epoch in tqdm(range(num_epochs), desc='Training Epochs'):
         loss.backward()
         optimizer.step()
 
-        # 使用 softmax 获取概率分布并选取最大概率的索引作为预测结果
+        
         softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
         _, predicted = torch.max(softmax_outputs, 1)
 
@@ -99,7 +99,7 @@ for epoch in tqdm(range(num_epochs), desc='Training Epochs'):
 
     accuracy = 100 * correct / total
     epoch_accuracies.append(accuracy)
-    # 新增：计算并保存当前epoch的F1分数
+   
     current_f1_score = f1_score(current_epoch_labels, current_epoch_predictions, average='macro')
     epoch_f1_scores.append(current_f1_score)
     avg_epoch_loss = current_epoch_loss / len(data_loader)
@@ -115,8 +115,8 @@ for epoch in tqdm(range(num_epochs), desc='Training Epochs'):
         best_epoch = epoch
         best_outputs = np.vstack(epoch_outputs)
         best_embedding = np.vstack(epoch_embedding)
-        best_labels = np.hstack(epoch_labels)  # 保存最佳epoch的标签索引
-        # 保存模型
+        best_labels = np.hstack(epoch_labels)  
+       
         if epoch > save_epochs:
             if not os.path.exists('run'):
                 os.makedirs('run')
@@ -125,16 +125,16 @@ for epoch in tqdm(range(num_epochs), desc='Training Epochs'):
 
 #scheduler.step()
 
-# 将最佳epoch的标签索引转换回原始标签
+
 original_best_labels = label_encoder.inverse_transform(best_labels)
 
-# 在训练结束后，将最佳epoch的真实标签和预测标签保存到CSV文件中
+
 original_best_epoch_labels = label_encoder.inverse_transform(best_epoch_labels)
 original_best_epoch_predictions = label_encoder.inverse_transform(best_epoch_predictions)
 
 if not os.path.exists('run'):
     os.makedirs('run')
-# 创建DataFrame并保存到CSV
+
 df_predictions = pd.DataFrame({
     'True Label': original_best_epoch_labels,
     'Predicted Label': original_best_epoch_predictions
@@ -143,7 +143,7 @@ df_predictions = pd.DataFrame({
 df_predictions.to_csv('run/best_epoch_predictions.csv', header=False, index=False)
 print("Predictions of the best accuracy epoch are saved to 'best_epoch_predictions.csv'")
 
-# 将原始标签和outputs合并为DataFrame并保存
+
 if best_epoch >= 0:
     combined = np.column_stack((original_best_labels, best_embedding))
     df_best = pd.DataFrame(combined)
@@ -156,7 +156,7 @@ else:
 pd.DataFrame({'Average Accuracy': epoch_accuracies}).to_csv(f'{result_path}/average_accuracies.csv', index=False)
 pd.DataFrame({'Average F1 Score': epoch_f1_scores}).to_csv(f'{result_path}/average_f1_scores.csv', index=False)
 
-# 绘制平均准确率图
+
 plt.figure(figsize=(10, 6))
 plt.plot(range(1, num_epochs + 1, 1), epoch_accuracies, label='Average Accuracy per Epochs')
 plt.xlabel('Epoch')
@@ -166,7 +166,7 @@ plt.legend()
 plt.savefig(f'{result_path}/average_accuracy.pdf', dpi=600, format='pdf')
 plt.close()
 
-# 绘制混淆矩阵
+
 best_confusion_matrix = confusion_matrix(best_epoch_labels, best_epoch_predictions)
 original_labels = label_encoder.inverse_transform(range(len(label_encoder.classes_)))
 plt.figure(figsize=(10, 8))
@@ -180,7 +180,7 @@ plt.savefig(f'{result_path}/confusion_matrix.pdf', dpi=600, format='pdf')
 plt.close()
 pd.DataFrame(best_confusion_matrix, index=label_encoder.classes_, columns=label_encoder.classes_).to_csv(f'{result_path}/confusion_matrix.csv')
 
-# 新增：绘制平均F1分数图
+
 plt.figure(figsize=(10, 6))
 plt.plot(range(1, num_epochs + 1, 1), epoch_f1_scores, label='Average F1 Score per Epochs', color='red')
 plt.xlabel('Epoch')

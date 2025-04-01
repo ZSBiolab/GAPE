@@ -78,11 +78,11 @@ class prernamodel(nn.Module):
     def load_pretrained_weights(self, path):
         pretrained_dict = torch.load(path)
         model_dict = self.state_dict()
-        # 过滤出需要的参数
+        # Filter out the required parameters.
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
         model_dict.update(pretrained_dict)
         self.load_state_dict(model_dict)
-        # 冻结特定部分的参数
+        # Freeze the parameters of a specific part
         for name, param in self.named_parameters():
             if 'residual_block3' in name or 'residual_block4' in name or 'fc2' in name:
                 param.requires_grad = False

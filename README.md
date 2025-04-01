@@ -5,6 +5,7 @@
 
 Please install the necessary libraries according to the following requirements.  
 This program support running in the Linux or Windows system.
+We suggest using the conda-environment to manage your program.
 
 ### Dependency library
 
@@ -41,6 +42,7 @@ If you want to modify the Hyperparameter of this model, you can change the numbe
 **input_embedding:** The larger the input_embedding, the more original information will be retained, and the training time will also increase.
 
 **save_epochs:** The model will save the optimal parameters after save_epochs.
+![APM](imgs/APM.png)
 
 ## ATGM  adversarial transcriptomic generation model
 You can run the ATGM by typing the following from the command line:
@@ -58,6 +60,8 @@ You can generate transcriptomic data by using:
 ```bash
 python rna_generate.py
 ```
+![ATGM](imgs/ATGM.png)
+
 ## gene importance analysis using integrated_gradines
 
 You can generate gene importance by using:
@@ -66,6 +70,7 @@ You can generate gene importance by using:
 python integrated_gradines_analysis.py 
 ```
 The resulte will be save as top_100_attribution_data.csv
+![gene_importance](imgs/gene_importance.png)
 
 ### Program structure
 ```bash

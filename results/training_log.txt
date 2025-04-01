@@ -1,0 +1,2 @@
+Epoch,Loss,Pre RNA Loss 1,Pre RNA Loss 2,Time (s)
+1,5.7203,0.1722,5.5481,59.66

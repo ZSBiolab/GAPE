@@ -5,7 +5,6 @@ import torch.nn.functional as F
 class AgeModel(nn.Module):
     def __init__(self, output_features, input_embedding, num_classes):
         super(AgeModel, self).__init__()
-        # 这些层的维度需要与原始模型中对应层的维度一致
         self.attention = SelfAttention(output_features)
         self.residual_block3 = ResidualBlock(output_features, 1024)
         self.residual_block4 = ResidualBlock(1024, input_embedding)
@@ -19,7 +18,6 @@ class AgeModel(nn.Module):
         output = self.fc2(embedding)
         return embedding, output
 
-# 注意力层和残差块的定义与原模型相同
 class SelfAttention(nn.Module):
     def __init__(self, feature_dim):
         super(SelfAttention, self).__init__()
